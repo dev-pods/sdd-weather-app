@@ -1,0 +1,38 @@
+name: Validate Tasks
+
+on:
+  pull_request:
+    paths:
+      - 'tasks/**'
+      - 'src/**'
+
+jobs:
+  validate-tasks:
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Impor ordem Spec → Plan → Tasks
+        run: |
+          SPEC="specs/weather-app-spec.md"
+          PLAN="plans/weather-app-plan.md"
+          TASKS="tasks/weather-app-tasks.md"
+          for f in "$SPEC" "$PLAN" "$TASKS"; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Artefato ausente: $f. Respeite a ordem Spec → Plan → Tasks."
+              exit 1
+            fi
+          done
+          echo "Spec, plano e tarefas presentes."
+
+      - name: Verificar granularidade das tarefas
+        run: |
+          TASKS="tasks/weather-app-tasks.md"
+          COUNT=$(grep -cE "T-[0-9]+" "$TASKS" || true)
+          echo "Tarefas encontradas (referências T-NN): $COUNT"
+          if [ "$COUNT" -lt 6 ]; then
+            echo "::error::Backlog pouco granular. Esperado ao menos 6 tarefas (T-NN)."
+            exit 1
+          fi
+          echo "Backlog suficientemente granular."

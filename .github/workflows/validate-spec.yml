@@ -1,0 +1,42 @@
+name: Validate Spec
+
+on:
+  pull_request:
+    paths:
+      - 'specs/**'
+      - 'plans/**'
+      - 'tasks/**'
+      - 'src/**'
+
+jobs:
+  validate-spec:
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verificar existência da especificação
+        run: |
+          SPEC="specs/weather-app-spec.md"
+          if [ ! -f "$SPEC" ]; then
+            echo "::error::Especificação ausente: $SPEC não encontrado."
+            echo "Spec-Driven Development: comece pela spec antes de qualquer código."
+            exit 1
+          fi
+          echo "Especificação encontrada."
+
+      - name: Validar seções obrigatórias
+        run: |
+          SPEC="specs/weather-app-spec.md"
+          REQUIRED=("Overview" "Functional Requirements" "User Stories" "Acceptance Criteria" "Non-Functional Requirements" "Edge Cases" "Assumptions" "Risks")
+          MISSING=0
+          for section in "${REQUIRED[@]}"; do
+            if ! grep -qi "$section" "$SPEC"; then
+              echo "::error::Seção obrigatória ausente na spec: $section"
+              MISSING=1
+            fi
+          done
+          if [ "$MISSING" -eq 1 ]; then
+            exit 1
+          fi
+          echo "Todas as seções obrigatórias estão presentes."

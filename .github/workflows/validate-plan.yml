@@ -1,0 +1,45 @@
+name: Validate Plan
+
+on:
+  pull_request:
+    paths:
+      - 'plans/**'
+      - 'tasks/**'
+      - 'src/**'
+
+jobs:
+  validate-plan:
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Impor ordem Spec → Plan
+        run: |
+          SPEC="specs/weather-app-spec.md"
+          PLAN="plans/weather-app-plan.md"
+          if [ ! -f "$PLAN" ]; then
+            echo "::error::Plano ausente: $PLAN não encontrado."
+            exit 1
+          fi
+          if [ ! -f "$SPEC" ]; then
+            echo "::error::Não pode existir plano sem spec. Crie $SPEC primeiro."
+            exit 1
+          fi
+          echo "Spec e plano presentes."
+
+      - name: Validar seções obrigatórias do plano
+        run: |
+          PLAN="plans/weather-app-plan.md"
+          REQUIRED=("Architecture" "Tech Stack" "Data Model" "Data Flow" "Error Handling" "Testing Strategy")
+          MISSING=0
+          for section in "${REQUIRED[@]}"; do
+            if ! grep -qi "$section" "$PLAN"; then
+              echo "::error::Seção obrigatória ausente no plano: $section"
+              MISSING=1
+            fi
+          done
+          if [ "$MISSING" -eq 1 ]; then
+            exit 1
+          fi
+          echo "Plano válido."

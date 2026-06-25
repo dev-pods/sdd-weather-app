@@ -1,0 +1,79 @@
+name: Bootstrap branch protection
+
+# Configura automaticamente a proteção da branch `main` e a estratégia de merge
+# do repositório no PRIMEIRO push à `main` de um repositório criado a partir
+# deste template.
+#
+# - NÃO roda no próprio repositório template (guard `is_template`).
+# - Usa o `gh` CLI já pré-instalado no runner (nada é instalado na máquina do
+#   usuário).
+# - Se autodesabilita após a primeira execução BEM-SUCEDIDA, para não repetir
+#   em merges posteriores na `main`.
+#
+# IMPORTANTE: o `GITHUB_TOKEN` padrão NÃO tem permissão para alterar proteção de
+# branch nem configurações administrativas do repositório. Por isso é necessário
+# um secret `SETUP_TOKEN` (PAT fine-grained com `Administration: write` e
+# `Contents: read`, OU PAT clássico com escopo `repo`). Cada membro deve criar
+# esse secret no repositório gerado a partir do template:
+#   Settings → Secrets and variables → Actions → New repository secret (SETUP_TOKEN)
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  setup-branch-protection:
+    name: Configurar proteção da main
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar token de administração
+        env:
+          SETUP_TOKEN: ${{ secrets.SETUP_TOKEN }}
+        run: |
+          if [ -z "$SETUP_TOKEN" ]; then
+            echo "::error::Secret 'SETUP_TOKEN' ausente. Crie um PAT com 'Administration: write' e 'Contents: read' (ou PAT clássico com escopo 'repo') e adicione como secret 'SETUP_TOKEN' em Settings → Secrets and variables → Actions. O workflow não se desabilitará até isso ser configurado; basta dar um novo push na main depois."
+            exit 1
+          fi
+
+      - name: Habilitar proteção da branch main
+        env:
+          GH_TOKEN: ${{ secrets.SETUP_TOKEN }}
+        run: |
+          gh api -X PUT "repos/${{ github.repository }}/branches/main/protection" \
+            --input - <<'JSON'
+          {
+            "required_status_checks": {
+              "strict": true,
+              "contexts": ["build-and-test"]
+            },
+            "enforce_admins": false,
+            "required_pull_request_reviews": {
+              "required_approving_review_count": 0
+            },
+            "restrictions": null,
+            "allow_force_pushes": false,
+            "allow_deletions": false
+          }
+          JSON
+
+      - name: Configurar estratégia de merge (merge commit + auto-delete)
+        env:
+          GH_TOKEN: ${{ secrets.SETUP_TOKEN }}
+        run: |
+          gh api -X PATCH "repos/${{ github.repository }}" \
+            -F allow_merge_commit=true \
+            -F allow_squash_merge=false \
+            -F allow_rebase_merge=false \
+            -F delete_branch_on_merge=true
+
+      - name: Autodesabilitar este workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow disable "bootstrap-branch-protection.yml"

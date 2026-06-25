@@ -1,0 +1,5 @@
+minimumReleaseAgeExclude:
+- '@types/node@26.0.0'
+
+onlyBuiltDependencies:
+- esbuild

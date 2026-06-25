@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "GitHub.copilot",
+    "GitHub.copilot-chat",
+    "biomejs.biome",
+    "ms-playwright.playwright",
+    "bradlc.vscode-tailwindcss",
+    "vitest.explorer"
+  ]
+}

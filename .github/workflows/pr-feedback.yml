@@ -1,0 +1,38 @@
+name: PR Feedback
+
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  welcome:
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comentar com orientações de qualidade
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const body = [
+              '### Feedback automático — SDD Weather App',
+              '',
+              'Obrigado por abrir este Pull Request! Antes do review, confirme:',
+              '',
+              '1. **Spec → Plan → Tasks** existem e estão atualizados.',
+              '2. O checklist do template de PR foi preenchido.',
+              '3. `lint`, `build` e `test` passam localmente.',
+              '',
+              '> Dica: use o **Review Agent** (`.github/agents/review.agent.md`) ou o',
+              '> prompt `review-prompt` para uma auto-revisão antes de pedir review humano.',
+              '',
+              'As validações de **spec**, **plan** e **tasks** rodam automaticamente neste PR.',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

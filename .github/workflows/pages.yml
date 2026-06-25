@@ -1,0 +1,65 @@
+name: Deploy Workshop + App to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build app
+        env:
+          # App is served under /<repo>/app/ on GitHub Pages.
+          VITE_BASE: /${{ github.event.repository.name }}/app/
+        run: pnpm build
+
+      - name: Assemble Pages site
+        run: |
+          mkdir -p _site
+          # Workshop site (docs/) is published at the root.
+          cp -r docs/* _site/
+          # The built app is published under /app/.
+          mkdir -p _site/app
+          cp -r dist/* _site/app/
+          # Make workshop markdown available to the site renderer.
+          mkdir -p _site/workshop
+          cp -r workshop/* _site/workshop/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

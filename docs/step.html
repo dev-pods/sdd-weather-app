@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDD Weather App — Módulo</title>
+    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Markdown renderer + syntax highlighting (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Confetti para a celebração de conclusão (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  </head>
+  <body class="step-page">
+    <header class="step-topbar">
+      <a class="topbar-home" href="index.html">SDD Weather App</a>
+      <span id="progress-label" class="topbar-progress" aria-live="polite"></span>
+      <nav class="topbar-nav">
+        <select id="module-select" aria-label="Selecionar módulo"></select>
+      </nav>
+    </header>
+
+    <div class="step-layout">
+      <aside class="step-sidebar">
+        <h2>Conteúdo do módulo</h2>
+        <ul id="tab-list" class="tab-list">
+          <li><button data-tab="README" class="tab active">Guia</button></li>
+          <li><button data-tab="challenge" class="tab">Desafio</button></li>
+          <li><button data-tab="prompts" class="tab">Prompts</button></li>
+          <li><button data-tab="solution" class="tab">Solução</button></li>
+        </ul>
+
+      </aside>
+
+      <main class="step-content">
+        <article id="content" class="markdown-body">
+          <p class="loading">Carregando…</p>
+        </article>
+
+        <nav class="step-pager">
+          <a id="prev-link" class="btn btn-ghost" href="#">← Anterior</a>
+          <a id="next-link" class="btn btn-primary" href="#">Próximo →</a>
+        </nav>
+      </main>
+    </div>
+
+    <script src="assets/modules.js"></script>
+    <script src="assets/step.js"></script>
+  </body>
+</html>
