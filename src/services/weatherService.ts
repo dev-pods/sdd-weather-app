@@ -3,6 +3,7 @@ import type { City, CurrentWeather, ForecastDay, WeatherData } from '../types/we
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
 const REQUEST_TIMEOUT_MS = 10_000;
+const FORECAST_DAYS = 5;
 
 /** Erro tipado da camada de dados, com mensagem amigável ao usuário. */
 export class WeatherServiceError extends Error {
@@ -19,10 +20,10 @@ async function fetchWithTimeout(url: string): Promise<Response> {
   try {
     return await fetch(url, { signal: controller.signal });
   } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new WeatherServiceError('A requisição demorou demais. Tente novamente.');
+    if (err !== null && typeof err === 'object' && 'name' in err && err.name === 'AbortError') {
+      throw new WeatherServiceError('A requisição demorou demais.');
     }
-    throw new WeatherServiceError('Falha de rede. Verifique sua conexão.');
+    throw new WeatherServiceError('Falha de rede.');
   } finally {
     clearTimeout(timeout);
   }
@@ -96,7 +97,18 @@ function mapCurrent(c: NonNullable<ForecastResponse['current']>): CurrentWeather
 }
 
 function mapForecast(d: NonNullable<ForecastResponse['daily']>): ForecastDay[] {
-  return d.time.map((date, i) => ({
+  const arrays = [
+    d.time,
+    d.weather_code,
+    d.temperature_2m_max,
+    d.temperature_2m_min,
+    d.precipitation_probability_max,
+  ];
+  if (arrays.some((values) => !Array.isArray(values) || values.length < FORECAST_DAYS)) {
+    throw new WeatherServiceError('Resposta de clima incompleta. Tente novamente.');
+  }
+
+  return d.time.slice(0, FORECAST_DAYS).map((date, i) => ({
     date,
     weatherCode: d.weather_code[i],
     max: d.temperature_2m_max[i],
@@ -115,9 +127,8 @@ export async function getWeather(city: City): Promise<WeatherData> {
     longitude: String(city.longitude),
     current:
       'temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,precipitation,weather_code',
-    daily:
-      'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
-    forecast_days: '5',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
+    forecast_days: String(FORECAST_DAYS),
     timezone: 'auto',
   });
 

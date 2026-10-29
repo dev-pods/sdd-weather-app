@@ -72,5 +72,27 @@ test('viewport mobile renderiza o fluxo principal', async ({ page }) => {
 
   await page.getByLabel(/buscar cidade/i).fill('Seattle');
   await page.getByRole('button', { name: /buscar/i }).click();
-  await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
+  const currentWeather = page.getByRole('region', { name: /clima atual/i });
+  await expect(currentWeather.getByRole('heading', { name: 'Seattle' })).toBeVisible();
+  await expect(currentWeather.getByText('0°', { exact: true })).toBeVisible();
+  await expect(currentWeather.getByText('Nublado', { exact: true })).toBeVisible();
+  await expect(currentWeather.getByText('80%', { exact: true })).toBeVisible();
+  const forecastRegion = page.getByRole('region', { name: /previsão de 5 dias/i });
+  await expect(forecastRegion.getByRole('listitem')).toHaveCount(5);
 });
+
+for (const width of [320, 375, 1024]) {
+  test(`layout sem transbordamento horizontal em ${width}px`, async ({ page }) => {
+    await mockApis(page);
+    await page.setViewportSize({ width, height: 812 });
+    await page.goto('/');
+    await page.getByLabel(/buscar cidade/i).fill('Seattle');
+    await page.getByRole('button', { name: /buscar/i }).click();
+    await expect(page.getByRole('heading', { name: 'Seattle' })).toBeVisible();
+
+    const hasOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    );
+    expect(hasOverflow).toBe(false);
+  });
+}

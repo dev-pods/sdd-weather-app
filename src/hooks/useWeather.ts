@@ -30,9 +30,10 @@ export function useWeather(): UseWeatherResult {
   // biome-ignore lint/correctness/useExhaustiveDependencies: search inicia o fluxo na montagem; loadWeather é estável
   const search = useCallback(async (name: string) => {
     const trimmed = name.trim();
-    setQuery(trimmed);
     if (!trimmed) return;
 
+    setQuery(trimmed);
+    setLastCity(null);
     setStatus('loading');
     setError(null);
     setCities([]);

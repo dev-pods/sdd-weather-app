@@ -21,7 +21,7 @@ function Metric({ icon, label, value }: MetricProps) {
         {icon}
       </span>
       <div>
-        <p className="text-xs text-white/50">{label}</p>
+        <p className="text-xs text-white/70">{label}</p>
         <p className="font-semibold">{value}</p>
       </div>
     </div>
@@ -39,8 +39,8 @@ export default function CurrentWeather({ city, current, unit }: CurrentWeatherPr
     >
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold md:text-3xl">{city.name}</h2>
-          {location && <p className="text-white/60">{location}</p>}
+          <h2 className="break-words text-2xl font-bold md:text-3xl">{city.name}</h2>
+          {location && <p className="break-words text-white/70">{location}</p>}
 
           <div className="mt-6 flex items-center gap-4">
             <span aria-hidden="true" className="text-6xl">
@@ -53,7 +53,7 @@ export default function CurrentWeather({ city, current, unit }: CurrentWeatherPr
           <p className="mt-2 text-white/70">{getWeatherLabel(current.weatherCode)}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
           <Metric icon="💧" label="Umidade" value={`${Math.round(current.humidity)}%`} />
           <Metric
             icon="💨"
