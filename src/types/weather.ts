@@ -21,21 +21,21 @@ export interface City {
 
 /** Condições atuais. Temperatura sempre em °C. */
 export interface CurrentWeather {
-  temperature: number;
-  weatherCode: number;
-  humidity: number;
-  windSpeed: number;
-  pressure: number;
-  precipitation: number;
-  time: string;
+  temperature: number | null;
+  weatherCode: number | null;
+  humidity: number | null;
+  windSpeed: number | null;
+  pressure: number | null;
+  precipitation: number | null;
+  time: string | null;
 }
 
 /** Um dia da previsão. Temperaturas sempre em °C. */
 export interface ForecastDay {
-  date: string;
-  min: number;
-  max: number;
-  weatherCode: number;
+  date: string | null;
+  min: number | null;
+  max: number | null;
+  weatherCode: number | null;
   precipitationProbability: number;
 }
 

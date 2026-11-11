@@ -113,4 +113,63 @@ describe('useWeather', () => {
     expect(getWeather).toHaveBeenCalledTimes(1);
     expect(result.current.status).toBe('empty');
   });
+
+  it('ignora falha de busca antiga após uma busca mais recente', async () => {
+    let rejectOldSearch: (error: Error) => void = () => {};
+    vi.mocked(searchCities)
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          rejectOldSearch = reject;
+        }),
+      )
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
+    const { result } = renderHook(() => useWeather());
+    let oldSearch: Promise<void> = Promise.resolve();
+
+    act(() => {
+      oldSearch = result.current.search('Seattle');
+    });
+    await act(async () => result.current.search('Lisboa'));
+    await act(async () => {
+      rejectOldSearch(new WeatherServiceError('Falha de rede.'));
+      await oldSearch;
+    });
+
+    expect(result.current.status).toBe('empty');
+    expect(result.current.error).toBeNull();
+    await act(async () => result.current.retry());
+    expect(searchCities).toHaveBeenLastCalledWith('Lisboa');
+  });
+
+  it('ignora falha de forecast antiga e repete a cidade mais recente', async () => {
+    const newCity: City = { ...city, id: 2, name: 'Lisboa', country: 'Portugal' };
+    const newWeather: WeatherData = { ...weather, city: newCity };
+    let rejectOldForecast: (error: Error) => void = () => {};
+    vi.mocked(getWeather)
+      .mockReturnValueOnce(
+        new Promise((_resolve, reject) => {
+          rejectOldForecast = reject;
+        }),
+      )
+      .mockResolvedValueOnce(newWeather)
+      .mockResolvedValueOnce(newWeather);
+    const { result } = renderHook(() => useWeather());
+    let oldSelection: Promise<void> = Promise.resolve();
+
+    act(() => {
+      oldSelection = result.current.selectCity(city);
+    });
+    await act(async () => result.current.selectCity(newCity));
+    await act(async () => {
+      rejectOldForecast(new WeatherServiceError('Falha de rede.'));
+      await oldSelection;
+    });
+
+    expect(result.current.status).toBe('success');
+    expect(result.current.data).toEqual(newWeather);
+    expect(result.current.error).toBeNull();
+    await act(async () => result.current.retry());
+    expect(getWeather).toHaveBeenLastCalledWith(newCity);
+  });
 });

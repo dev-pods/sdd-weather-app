@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import App from '../../src/App';
@@ -133,6 +133,40 @@ describe('App', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('A requisição demorou demais.');
     expect(screen.getByRole('button', { name: /tentar novamente/i })).toBeEnabled();
     expect(screen.queryByText(/carregando o clima/i)).not.toBeInTheDocument();
+  });
+
+  it('exibe fallbacks para campos ausentes sem converter temperaturas nulas', async () => {
+    vi.mocked(searchCities).mockResolvedValue([city]);
+    vi.mocked(getWeather).mockResolvedValue({
+      city,
+      current: {
+        time: null,
+        temperature: null,
+        humidity: null,
+        windSpeed: null,
+        pressure: null,
+        precipitation: null,
+        weatherCode: null,
+      },
+      forecast: [
+        { date: null, min: null, max: null, weatherCode: null, precipitationProbability: 0 },
+      ],
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText(/buscar cidade/i), 'Seattle');
+    await user.click(screen.getByRole('button', { name: /buscar/i }));
+    const currentRegion = await screen.findByRole('region', { name: /clima atual/i });
+    const forecastRegion = screen.getByRole('region', { name: /previsão de 5 dias/i });
+    expect(within(currentRegion).getAllByText('—')).toHaveLength(5);
+    expect(within(currentRegion).getByText('Condição desconhecida')).toBeInTheDocument();
+    expect(within(forecastRegion).getAllByText('—')).toHaveLength(4);
+    expect(forecastRegion).toHaveTextContent('0%');
+    await user.click(screen.getByRole('button', { name: '°F' }));
+    expect(within(currentRegion).getAllByText('—')).toHaveLength(5);
+    expect(currentRegion).not.toHaveTextContent(/NaN|undefined|null|32°/);
+    expect(forecastRegion).not.toHaveTextContent(/NaN|undefined|null/);
   });
 });
 
