@@ -14,6 +14,11 @@ interface MetricProps {
   value: string;
 }
 
+function formatMetric(value: number | null, suffix: string, round = true): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  return `${round ? Math.round(value) : value}${suffix}`;
+}
+
 function Metric({ icon, label, value }: MetricProps) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-md">
@@ -21,7 +26,7 @@ function Metric({ icon, label, value }: MetricProps) {
         {icon}
       </span>
       <div>
-        <p className="text-xs text-white/50">{label}</p>
+        <p className="text-xs text-white/70">{label}</p>
         <p className="font-semibold">{value}</p>
       </div>
     </div>
@@ -39,8 +44,8 @@ export default function CurrentWeather({ city, current, unit }: CurrentWeatherPr
     >
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold md:text-3xl">{city.name}</h2>
-          {location && <p className="text-white/60">{location}</p>}
+          <h2 className="break-words text-2xl font-bold md:text-3xl">{city.name}</h2>
+          {location && <p className="break-words text-white/70">{location}</p>}
 
           <div className="mt-6 flex items-center gap-4">
             <span aria-hidden="true" className="text-6xl">
@@ -53,22 +58,22 @@ export default function CurrentWeather({ city, current, unit }: CurrentWeatherPr
           <p className="mt-2 text-white/70">{getWeatherLabel(current.weatherCode)}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Metric icon="💧" label="Umidade" value={`${Math.round(current.humidity)}%`} />
+        <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2">
+          <Metric icon="💧" label="Umidade" value={formatMetric(current.humidity, '%')} />
           <Metric
             icon="💨"
             label="Vento"
-            value={`${Math.round(current.windSpeed)} km/h`}
+            value={formatMetric(current.windSpeed, ' km/h')}
           />
           <Metric
             icon="🌧️"
             label="Precipitação"
-            value={`${current.precipitation} mm`}
+            value={formatMetric(current.precipitation, ' mm', false)}
           />
           <Metric
             icon="📊"
             label="Pressão"
-            value={`${Math.round(current.pressure)} hPa`}
+            value={formatMetric(current.pressure, ' hPa')}
           />
         </div>
       </div>

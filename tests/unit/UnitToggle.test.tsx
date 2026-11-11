@@ -48,4 +48,16 @@ describe('UnitToggle + CurrentWeather', () => {
     render(<Harness />);
     expect(screen.getByRole('button', { name: '°C' })).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('permite alternar a unidade pelo teclado', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.tab();
+    await user.tab();
+    expect(screen.getByRole('button', { name: '°F' })).toHaveFocus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: '°F' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('32°')).toBeInTheDocument();
+  });
 });

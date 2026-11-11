@@ -12,5 +12,8 @@
     "editor.defaultFormatter": "biomejs.biome"
   },
   "files.eol": "\n",
-  "chat.promptFiles": true
+  "chat.promptFiles": true,
+  "githubPullRequests.ignoredPullRequestBranches": [
+    "main"
+  ]
 }

@@ -29,14 +29,19 @@ export default function App() {
             </span>
             <span className="text-lg font-bold">WeatherView</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 w-full items-center gap-3 sm:w-auto sm:flex-1 sm:justify-end">
             <SearchBar onSearch={search} disabled={status === 'loading'} />
             <UnitToggle unit={unit} onChange={setUnit} />
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+      <p role="status" aria-atomic="true" className="sr-only">
+        {status === 'loading' && 'Buscando previsão do tempo.'}
+        {status === 'success' && data && `Previsão de ${data.city.name} carregada.`}
+      </p>
+
+      <main aria-busy={status === 'loading'} className="mx-auto max-w-5xl space-y-8 px-4 py-8">
         {status === 'idle' && (
           <EmptyState
             title="Busque uma cidade para começar"
@@ -63,7 +68,7 @@ export default function App() {
         )}
       </main>
 
-      <footer className="py-8 text-center text-sm text-white/40">
+      <footer className="py-8 text-center text-sm text-white/70">
         Dados por{' '}
         <a
           href="https://open-meteo.com/"

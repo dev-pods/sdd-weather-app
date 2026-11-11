@@ -13,7 +13,12 @@ export default function ForecastList({ forecast, unit }: ForecastListProps) {
       <h2 className="mb-4 text-xl font-bold">Previsão de 5 dias</h2>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {forecast.map((day, index) => (
-          <ForecastCard key={day.date} day={day} index={index} unit={unit} />
+          <ForecastCard
+            key={day.date ?? `missing-date-${index}`}
+            day={day}
+            index={index}
+            unit={unit}
+          />
         ))}
       </ul>
     </section>
