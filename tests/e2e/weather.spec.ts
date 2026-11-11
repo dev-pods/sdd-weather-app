@@ -65,6 +65,49 @@ test('estado vazio quando a cidade não existe', async ({ page }) => {
   await expect(page.getByText(/nenhuma cidade encontrada/i)).toBeVisible();
 });
 
+test('busca com caracteres especiais apresenta o resultado correto', async ({ page }) => {
+  await page.route('**/geocoding-api.open-meteo.com/**', (route) =>
+    route.fulfill({ json: { results: [{ ...geocoding.results[0], name: 'São Paulo & região' }] } }),
+  );
+  await page.route('**/api.open-meteo.com/**', (route) => route.fulfill({ json: forecast }));
+  await page.goto('/');
+
+  const geocodingRequest = page.waitForRequest('**/geocoding-api.open-meteo.com/**');
+  await page.getByLabel(/buscar cidade/i).fill(' São Paulo & região ');
+  await page.getByRole('button', { name: /buscar/i }).click();
+  const request = await geocodingRequest;
+  expect(new URL(request.url()).searchParams.get('name')).toBe('São Paulo & região');
+  await expect(page.getByRole('heading', { name: 'São Paulo & região' })).toBeVisible();
+});
+
+test('forecast parcial exibe fallbacks sem valores inválidos', async ({ page }) => {
+  await page.route('**/geocoding-api.open-meteo.com/**', (route) =>
+    route.fulfill({ json: geocoding }),
+  );
+  await page.route('**/api.open-meteo.com/**', (route) =>
+    route.fulfill({
+      json: {
+        current: { temperature_2m: null, weather_code: null, wind_speed_10m: 0 },
+        daily: { time: ['2026-06-16'], temperature_2m_max: [null] },
+      },
+    }),
+  );
+  await page.goto('/');
+
+  await page.getByLabel(/buscar cidade/i).fill('Seattle');
+  await page.getByRole('button', { name: /buscar/i }).click();
+  const currentWeather = page.getByRole('region', { name: /clima atual/i });
+  const forecastRegion = page.getByRole('region', { name: /previsão de 5 dias/i });
+  await expect(currentWeather.getByRole('heading', { name: 'Seattle' })).toBeVisible();
+  await expect(currentWeather).toContainText('—');
+  await expect(currentWeather).toContainText('Condição desconhecida');
+  await expect(forecastRegion.getByRole('listitem')).toHaveCount(5);
+  await expect(forecastRegion.getByRole('listitem').first()).toContainText('—');
+  await page.getByRole('button', { name: '°F' }).click();
+  await expect(currentWeather).not.toContainText(/NaN|undefined|null|32°/);
+  await expect(forecastRegion).not.toContainText(/NaN|undefined|null/);
+});
+
 test('viewport mobile renderiza o fluxo principal', async ({ page }) => {
   await mockApis(page);
   await page.setViewportSize({ width: 375, height: 812 });

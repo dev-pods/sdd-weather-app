@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import SearchBar from '../../src/components/SearchBar';
@@ -17,6 +17,16 @@ describe('SearchBar', () => {
     await userEvent.type(screen.getByLabelText(/buscar cidade/i), 'Lisboa');
     await userEvent.click(screen.getByRole('button', { name: /buscar/i }));
     expect(onSearch).toHaveBeenCalledWith('Lisboa');
+  });
+
+  it('não envia o formulário enquanto a busca está desabilitada', async () => {
+    const user = userEvent.setup();
+    const onSearch = vi.fn();
+    render(<SearchBar onSearch={onSearch} disabled />);
+
+    await user.type(screen.getByLabelText(/buscar cidade/i), 'Lisboa');
+    fireEvent.submit(screen.getByRole('search'));
+    expect(onSearch).not.toHaveBeenCalled();
   });
 
   it('não dispara busca contendo apenas espaços', async () => {

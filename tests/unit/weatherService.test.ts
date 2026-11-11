@@ -131,10 +131,13 @@ describe('weatherService', () => {
   });
 
   describe('searchCities', () => {
-    it('retorna lista vazia para input vazio sem chamar a rede', async () => {
+    it.each([
+      '',
+      '   ',
+    ])('retorna lista vazia para input vazio sem chamar a rede', async (query) => {
       const fetchSpy = vi.fn();
       vi.stubGlobal('fetch', fetchSpy);
-      const result = await searchCities('   ');
+      const result = await searchCities(query);
       expect(result).toEqual([]);
       expect(fetchSpy).not.toHaveBeenCalled();
     });
@@ -169,6 +172,17 @@ describe('weatherService', () => {
         'https://geocoding-api.open-meteo.com/v1/search?name=S%C3%A3o%20Paulo%20%26%20regi%C3%A3o&count=5&language=pt&format=json',
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
+    });
+
+    it('retorna resultados ao buscar nome com acentos e caracteres especiais', async () => {
+      const fetchSpy = mockFetchOnce({ results: [{ ...CITY, name: 'São Paulo & região' }] });
+      vi.stubGlobal('fetch', fetchSpy);
+
+      expect(await searchCities(' São Paulo & região ')).toEqual([
+        { ...CITY, name: 'São Paulo & região' },
+      ]);
+      const requestUrl = new URL(fetchSpy.mock.calls[0][0] as string);
+      expect(requestUrl.searchParams.get('name')).toBe('São Paulo & região');
     });
 
     it('retorna vazio quando não há results', async () => {
